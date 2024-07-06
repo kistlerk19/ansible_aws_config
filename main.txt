@@ -1,0 +1,32 @@
+
+   ~/workflows/ansible_aws_instance                                                                                        255 ✘  1m 15s   17:42:30 
+❯ ansible-playbook main.yml --tags create_ec2 --ask-vault-pass
+Vault password:
+[WARNING]: No inventory was parsed, only implicit localhost is available
+[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
+
+PLAY [Creating an AWS EC2 instance with Ansible CLI] ***********************************************************************************************************
+
+TASK [Creating a VPC] ******************************************************************************************************************************************
+changed: [localhost]
+
+TASK [Creating and Attaching Internet Gateway to VPC] **********************************************************************************************************
+changed: [localhost]
+
+TASK [Creating a subnet] ***************************************************************************************************************************************
+changed: [localhost]
+
+TASK [Create a route table] ************************************************************************************************************************************
+changed: [localhost]
+
+TASK [Creating a security group] *******************************************************************************************************************************
+changed: [localhost]
+
+TASK [Creating a key pair for ssh] *****************************************************************************************************************************
+ok: [localhost] => (item=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD4BC1C6l9IAoTzc8l93VDqU5XtU0o1vjy0P6q6SMVyBYgP6NTvnJWG6a/dGq1hF3cgIkcDZ4gRjQkBakvQnyWhSe0eEU4stvzzwr6jqFd0ynOE7helbG/v9nQnFAqRToubwnQiGkCukmLHkDNJx0IPc/KZHkx4NzPDmsFlRn2augAHY4dNZt3G9hwQf8+tHufvQsAACCfFNeJkGEMV5NeR27T2sUY6G1/lUbc6zxj+fEZ+iGcDm+a/deI+m++T6mKhWo/BCmfSxdoYejNuLqIb0q+n6wJyoODjSbGt/RpzWXBSOoNrfoDexnmg0OXdV/8GBjBjdCfQYxHjc0Dhi/ptJsWpbpAuAXm2leuY3tELQCaLQkeGjhvNsgZWMDYEQm4zSPcvmHPEVUsIUGmwGyGBiVJjPllvEjU9MrDWueflt41Tx0WGS7E5MG8L2fRi07TsUoXZRnIBP8gVS9KZmuzaKyGh80TqObc4Rs0H+CmVS0SHVHcdOBuFTV2VruG5GkMHkzakS3H3yP7sKNnzPfq3mqvi/0E0Xu4sdbZbOHUK5cEoY6Ym1XwSj4EwL/ON3Ggpjx13XRUp6hYwY0vMCM/EXu2n61Jkacy/bacKJIUVKjnn2kS91kd9rv03MOSXhwb87Hr/hGNoR/3b7ggn5wjdw9ETDc1e6dzL6bHaFjT8jQ== verlock@verlockt.local)
+
+TASK [Launching an EC2 instance with public ip address] ********************************************************************************************************
+changed: [localhost]
+
+PLAY RECAP *****************************************************************************************************************************************************
+localhost                  : ok=7    changed=6    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0

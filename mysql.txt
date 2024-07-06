@@ -1,0 +1,81 @@
+
+   ~/workflows/ansible_aws_instance                                                                                                1m 10s   19:28:51 
+❯ ansible-playbook -i inventory install_and_config_mysql.yml --ask-vault-pass
+Vault password:
+
+PLAY [Install, secure, and configure MySQL on EC2 Ubuntu] ******************************************************************************************************
+
+TASK [Gathering Facts] *****************************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Update apt cache] ****************************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Install required packages] *******************************************************************************************************************************
+changed: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Ensure MySQL is started and enabled] *********************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Set MySQL root password] *********************************************************************************************************************************
+[WARNING]: Option column_case_sensitive is not provided. The default is now false, so the column's name will be uppercased. The default will be changed to true
+in community.mysql 4.0.0.
+changed: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Remove anonymous users] **********************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Remove test database] ************************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Disallow root login remotely] ****************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => (item=%)
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => (item=::1)
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => (item=127.0.0.1)
+
+TASK [Create admin user] ***************************************************************************************************************************************
+changed: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Update MySQL configuration to allow remote connections] **************************************************************************************************
+changed: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Ensure MySQL is restarted] *******************************************************************************************************************************
+changed: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Verify MySQL is running] *********************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Display MySQL status] ************************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => {
+    "msg": "MySQL is active"
+}
+
+TASK [Check MySQL version] *************************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Display MySQL version] ***********************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => {
+    "msg": "mysql  Ver 8.0.37-0ubuntu0.24.04.1 for Linux on x86_64 ((Ubuntu))"
+}
+
+TASK [Verify MySQL connection as admin user] *******************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Display MySQL connection status] *************************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => {
+    "msg": "mysqld is alive"
+}
+
+TASK [Attempt to connect as root remotely (this should fail)] **************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+TASK [Display root remote login attempt result] ****************************************************************************************************************
+ok: [ec2-54-175-31-234.compute-1.amazonaws.com] => {
+    "msg": "Root remote login succeeded (expected: failed)"
+}
+
+RUNNING HANDLER [Restart MySQL] ********************************************************************************************************************************
+changed: [ec2-54-175-31-234.compute-1.amazonaws.com]
+
+PLAY RECAP *****************************************************************************************************************************************************
+ec2-54-175-31-234.compute-1.amazonaws.com : ok=20   changed=6    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0

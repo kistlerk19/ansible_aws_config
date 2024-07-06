@@ -1,0 +1,73 @@
+---
+- name: Install and secure MySQL on EC2
+  hosts: your_ec2_instance
+  become: yes
+  vars:
+    mysql_root_password: "Amalitech123"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install MySQL Server
+      apt:
+        name: mysql-server
+        state: present
+
+    - name: Ensure MySQL is started and enabled
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Set MySQL root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Remove anonymous users
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Disallow root login remotely
+      command: 'mysql -ne "{{ item }}"'
+      with_items:
+        - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+      changed_when: False
+
+    - name: Change root password plugin to mysql_native_password
+      command: 'mysql -ne "{{ item }}"'
+      with_items:
+        - UPDATE mysql.user SET plugin='mysql_native_password' WHERE User='root'
+      changed_when: False
+
+    - name: Reload privilege tables
+      command: 'mysql -ne "FLUSH PRIVILEGES"'
+      changed_when: False
+
+    - name: Enable MySQL password validation plugin
+      mysql_variables:
+        variable: validate_password.policy
+        value: MEDIUM
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      ignore_errors: yes  # This might fail on older MySQL versions
+
+    - name: Ensure MySQL is restarted
+      service:
+        name: mysql
+        state: restarted

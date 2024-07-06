@@ -1,0 +1,5 @@
+group_vars/all/*
+
+aws_config.j2
+aws_credentials.j2
+one.txt

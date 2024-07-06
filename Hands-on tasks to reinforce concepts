@@ -1,0 +1,239 @@
+ Task 1: MySQL Database Server Setup on EC2 with Backup and Restore Functionality
+
+Step-by-Step Instructions:
+
+ 1. Set Up MySQL Database Server on EC2
+
+1. Launch EC2 Instance
+    - Launch an Ubuntu t2.micro or t3.micro EC2 instance.
+    - Configure the security group to allow inbound MySQL traffic (port 3306) and SSH (port 22).
+
+2. Install MySQL Server
+    - SSH into the EC2 instance.
+    - Update the package list: 
+      ```bash
+      sudo apt-get update
+      ```
+    - Install MySQL Server: 
+      ```bash
+      sudo apt-get install mysql-server
+      ```
+    - Secure the MySQL installation: 
+      ```bash
+      sudo mysql_secure_installation
+      ```
+    - Verify MySQL is running: 
+      ```bash
+      sudo systemctl status mysql
+      ```
+
+ 2. Connect with External Client (MySQL Workbench)
+
+- Ensure the EC2 instance's public IP is noted.
+- Use MySQL Workbench to connect to the MySQL server using the public IP, username `root`, and the MySQL password.
+
+ 3. Load the `classicmodels` Database Using MySQL Workbench
+
+1. Download the `classicmodels` Database SQL File
+    - Obtain the `classicmodels` SQL file from a trusted source.
+
+2. Execute the SQL File in MySQL Workbench
+    - Open MySQL Workbench.
+    - Connect to your MySQL server.
+    - Use the `classicmodels` SQL file to load the database by executing the file.
+
+ 4. Load Another Database Using EC2 Terminal
+
+1. Upload the SQL File to the EC2 Instance
+    - Use SCP or any file transfer method to upload the SQL file to your EC2 instance.
+
+2. Load the Database
+    - SSH into the EC2 instance.
+    - Execute the SQL file: 
+      ```bash
+      mysql -u root -p < your_database.sql
+      ```
+
+ 5. Backup the Databases Using Client and EC2 Terminal
+
+1. Backup Using MySQL Workbench
+    - Use MySQL Workbench to create a backup of the `classicmodels` database.
+
+2. Backup Using EC2 Terminal
+    - SSH into the EC2 instance.
+    - Backup the database: 
+      ```bash
+      mysqldump -u root -p classicmodels > classicmodels_backup.sql
+      ```
+
+ 6. Drop Databases
+
+1. Drop Databases Using MySQL Workbench
+    - Use MySQL Workbench to drop the `classicmodels` database.
+
+2. Drop Databases Using EC2 Terminal
+    - SSH into the EC2 instance.
+    - Drop the database: 
+      ```bash
+      mysql -u root -p -e "DROP DATABASE classicmodels;"
+      ```
+
+ 7. Restore Databases from Backup Using Client and EC2 Terminal
+
+1. Restore Using MySQL Workbench
+    - Use MySQL Workbench to restore the `classicmodels` database from the backup file.
+
+2. Restore Using EC2 Terminal
+    - SSH into the EC2 instance.
+    - Restore the database: 
+      ```bash
+      mysql -u root -p < classicmodels_backup.sql
+      ```
+
+ 8. Create Bash Script for Backup and Restore
+
+1. Create the Script
+    - Write a Bash script (`backup_restore.sh`) that prompts the user to choose between backup and restore:
+      ```bash
+      !/bin/bash
+
+      echo "Select an option:"
+      echo "1. Backup"
+      echo "2. Restore"
+      read choice
+
+      if [ "$choice" -eq 1 ]; then
+          echo "Enter the directory to save the backup:"
+          read backup_dir
+          mysqldump -u root -p classicmodels > $backup_dir/classicmodels_backup.sql
+          gpg -c $backup_dir/classicmodels_backup.sql
+          scp $backup_dir/classicmodels_backup.sql.gpg ubuntu@<backup-ec2-ip>:/path/to/backup/
+      elif [ "$choice" -eq 2 ]; then
+          echo "Enter the directory of the backup file:"
+          read backup_dir
+          gpg $backup_dir/classicmodels_backup.sql.gpg
+          mysql -u root -p < $backup_dir/classicmodels_backup.sql
+      else
+          echo "Invalid option."
+      fi
+      ```
+    - Make the script executable:
+      ```bash
+      chmod +x backup_restore.sh
+      ```
+
+ 9. Backup Storage EC2 Configuration
+
+1. Launch Another EC2 Instance
+    - Launch a new Ubuntu EC2 instance to serve as the backup server.
+    - Configure its security group to allow SSH (port 22) and only allow MySQL traffic (port 3306) from the primary MySQL server EC2 instance.
+
+2. Install MySQL Server on Backup EC2
+    - SSH into the backup EC2 instance.
+    - Create a MySQL installation script (`install_mysql.sh`):
+      ```bash
+      !/bin/bash
+      sudo apt-get update
+      sudo apt-get install mysql-server -y
+      sudo mysql_secure_installation
+      sudo systemctl status mysql
+      ```
+    - Make the script executable and run it:
+      ```bash
+      chmod +x install_mysql.sh
+      ./install_mysql.sh
+      ```
+
+3. Script Copy and Restoration
+    - Ensure the primary EC2 instance can copy encrypted backups to the backup EC2 instance.
+    - Allow the restoration of databases from backup files stored on the backup EC2 instance.
+
+ 10. Security Configuration
+
+1. Configure Security Groups
+    - Ensure the backup EC2 instance's security group only accepts traffic from the MySQL server EC2 instance.
+
+2. Encrypt Backup Files
+    - Encrypt backups before transferring and storing them.
+    - Decrypt backups before restoring them to avoid errors.
+
+---
+
+Task 2: RDS Instance Setup and Management
+
+1. Set Up RDS Instance
+    - Log into AWS Management Console.
+    - Navigate to RDS and create a new MySQL instance.
+    - Configure security groups to allow access from your IP and the EC2 instance.
+
+2. Connect with External Client (MySQL Workbench)
+    - Use the endpoint provided by RDS to connect with MySQL Workbench.
+
+3. Connect with EC2 Instance
+    - Modify the security group to allow traffic from the EC2 instance.
+    - Use the RDS endpoint to connect from the EC2 terminal: `mysql -h <RDS endpoint> -u <username> -p`
+
+4. Load `classicmodels` Database Using MySQL Workbench
+    - Download and execute the SQL file via MySQL Workbench.
+
+5. Load Another Database Using EC2 Terminal
+    - Upload the SQL file to the EC2 instance.
+    - Load the database: `mysql -h <RDS endpoint> -u <username> -p < your_database.sql`
+
+6. Create Encrypted Backup Using EC2
+    - Backup: `mysqldump -h <RDS endpoint> -u <username> -p database_name | gpg -c > backup.sql.gpg`
+
+7. Amazon RDS Backup & Restore Using AWS Backup
+    - Follow the guide: [Amazon RDS Backup & Restore Using AWS Backup](https://aws.amazon.com/getting-started/hands-on/amazon-rds-backup-restore-using-aws-backup/?ref=gsrchandson&id=itprohandson)
+
+8. Migrate RDS MySQL to Aurora MySQL
+    - Follow the guide: [Migrate from RDS MySQL to Aurora MySQL](https://aws.amazon.com/getting-started/hands-on/migrate-rdsmysql-to-auroramysql/?ref=gsrchandson) (20 mins)
+
+---
+
+Task 3: Serverless MySQL/PostgreSQL Database and Full-Stack React App
+
+1. Configure and Connect to a Serverless MySQL/PostgreSQL Database
+    - Follow the guide: [Configure and Connect to Serverless MySQL Database](https://aws.amazon.com/getting-started/hands-on/configure-connect-serverless-mysql-database-aurora/?ref=gsrchandson) (40 mins)
+
+2. Build a Full-Stack React Application
+    - Follow the guide: [Build a Full-Stack React Application](https://aws.amazon.com/getting-started/hands-on/build-react-app-amplify-graphql/?ref=gsrchandson&id=updated) (60 mins)
+
+---
+
+Task 4: Oracle Database Instance and Scaling MySQL
+
+1. Create an Oracle Database Instance in Multi-AZ Deployment
+    - Follow the guide: [Create Oracle SE2 Instance in Multi-AZ Deployment](https://aws.amazon.com/getting-started/hands-on/create-oracle-se2-instance-in-multi-az-deployment-on-amazon-rds/?ref=gsrchandson) (15 mins)
+
+2. Auto Scaling MySQL Database with Amazon Aurora
+    - Follow the guide: [Auto Scaling a MySQL Database with Amazon Aurora](https://aws.amazon.com/getting-started/hands-on/aurora-autoscaling-with-readreplicas/?ref=gsrchandson) (20 mins)
+
+3. Deploy and Configure Amazon Lightsail MySQL Database
+    - Follow the guide: [Deploy and Configure Amazon Lightsail MySQL Database](https://aws.amazon.com/getting-started/hands-on/deploy-and-configure-an-amazon-lightsail-mysql-database/?ref=dc&id=gsrchandson) (20 mins)
+
+---
+
+Task 5: Boost MySQL Performance with Amazon ElastiCache for Redis
+
+- Follow the guide: [Boosting MySQL Database Performance with Amazon ElastiCache for Redis](https://aws.amazon.com/getting-started/hands-on/boosting-mysql-database-performance-with-amazon-elasticache-for-redis/?ref=gsrchandson) (140 mins)
+
+---
+
+Task 6: Fast Session Store with Amazon ElastiCache for Redis
+
+- Follow the guide: [Building Fast Session Caching with Amazon ElastiCache for Redis](https://aws.amazon.com/getting-started/hands-on/building-fast-session-caching-with-amazon-elasticache-for-redis/?ref=gsrchandson) (140 mins)
+
+---
+
+Task 7: AWS Serverless Hands On Project with DynamoDB
+
+- Follow the video tutorial: [Create a DynamoDB Project](https://medium.com/@inderjotsingh141/aws-serverless-hands-on-project-b678f69f5e98)
+
+---
+
+Task 8: Deploy a 3-Tier Web Application (Workshop)
+
+- Follow the workshop: [Deploy a 3-Tier Web Application](https://catalog.us-east-1.prod.workshops.aws/workshops/85cd2bb2-7f79-4e96-bdee-8078e469752a/en-US/introduction) (3 hrs)
+
+---

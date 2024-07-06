@@ -1,0 +1,128 @@
+---
+- name: Install, secure, and configure MySQL on EC2 Ubuntu
+  hosts: ec2
+  gather_facts: false
+  become: yes
+  vars:
+    mysql_root_password: "Amalitech123"
+    mysql_admin_user: "admin"
+    mysql_admin_password: "Aminu123456789"
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - mysql-server
+          - python3-mysqldb
+        state: present
+
+    - name: Ensure MySQL is started and enabled
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Set MySQL root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Remove anonymous users
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Disallow root login remotely
+      mysql_user:
+        name: root
+        host: "{{ item }}"
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      loop:
+        - '%'
+        - '::1'
+        - '127.0.0.1'
+
+    - name: Create admin user
+      mysql_user:
+        name: "{{ mysql_admin_user }}"
+        password: "{{ mysql_admin_password }}"
+        priv: '*.*:ALL,GRANT'
+        host: '%'
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Update MySQL configuration to allow remote connections
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: '^bind-address'
+        line: 'bind-address = 0.0.0.0'
+      notify: Restart MySQL
+
+    - name: Ensure MySQL is restarted
+      service:
+        name: mysql
+        state: restarted
+
+    - name: Verify MySQL is running
+      command: systemctl is-active mysql
+      register: mysql_status
+      changed_when: false
+      failed_when: mysql_status.rc != 0
+
+    - name: Display MySQL status
+      debug:
+        msg: "MySQL is {{ mysql_status.stdout }}"
+
+    - name: Check MySQL version
+      command: mysql --version
+      register: mysql_version
+      changed_when: false
+
+    - name: Display MySQL version
+      debug:
+        msg: "{{ mysql_version.stdout }}"
+
+    - name: Verify MySQL connection as admin user
+      command: mysqladmin -u {{ mysql_admin_user }} -p{{ mysql_admin_password }} -h 127.0.0.1 ping
+      register: mysql_ping
+      changed_when: false
+      failed_when: "'mysqld is alive' not in mysql_ping.stdout"
+
+    - name: Display MySQL connection status
+      debug:
+        msg: "{{ mysql_ping.stdout }}"
+
+    - name: Attempt to connect as root remotely (this should fail)
+      command: mysql -u root -p{{ mysql_root_password }} -h 127.0.0.1 -e "SELECT 1;"
+      register: root_remote_login
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Display root remote login attempt result
+      debug:
+        msg: "Root remote login {{ 'succeeded' if root_remote_login.rc == 0 else 'failed' }} (expected: failed)"
+
+  handlers:
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted

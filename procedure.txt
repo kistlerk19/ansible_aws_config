@@ -1,0 +1,41 @@
+1: run main.yml to launch instance
+2: run install_and_config_mysql.yml to configure and secure mysql
+3: run install_aws.yml to install and configure awscli credentials
+
+scp to upload the the .sql file to the remote directory or the ec2 instance
+
+mysql -u root -p < your_database.sql to import the db
+
+mysqldump -u root -p classicmodels > classicmodels_backup.sql to create a backup
+
+mysql -u root -p -e "DROP DATABASE classicmodels;" to drop the database
+
+create a new empty db
+
+then run: mysql -u root -p newdb < classicmodels_backup.sql to restore the db
+
+or run the script to do the backup and restore.
+
+4: Launch another ec2 instance
+--Configure its security group to allow SSH (port 22) and only allow MySQL traffic (port 3306)
+ from the primary MySQL server EC2 instance.
+ then Install MySQL Server on Backup EC2
+
+
+
+/usr/bin/mysqldump
+/usr/local/bin/aws
+
+###setting up cron job to periodically dump the database, encrypt with gpg and upload to s3 bucket.###
+## * * * * * ~/backup_mysql_to_s3.sh >> backup_mysql.log 2>&1
+create a new bucket: mysql-buck-42
+create a role to allow s3 full access
+
+attach the role to the ec2 instance 
+
+create the script for creating the backup, encrypting and uploading to s3 bucket
+
+then create the crontab!!
+
+sudo mkdir -p /home/ubuntu/backup
+sudo chown -R ubuntu:ubuntu /home/ubuntu/backup  # Replace 'ubuntu' with your username

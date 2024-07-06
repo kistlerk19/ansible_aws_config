@@ -1,0 +1,66 @@
+---
+- name: Install and configure AWS CLI on Ubuntu EC2
+  hosts: ec2
+  become: yes
+  gather_facts: false
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name: 
+          - unzip
+          - curl
+        state: present
+
+    - name: Download AWS CLI installer
+      get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+        dest: "/tmp/awscliv2.zip"
+        mode: '0644'
+
+    - name: Unzip AWS CLI installer
+      unarchive:
+        src: "/tmp/awscliv2.zip"
+        dest: "/tmp"
+        remote_src: yes
+
+    - name: Install AWS CLI
+      command: "/tmp/aws/install"
+      args:
+        creates: "/usr/local/bin/aws"
+
+    - name: Create .aws directory
+      file:
+        path: /home/ubuntu/.aws
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Configure AWS CLI
+      template:
+        src: aws_config.j2
+        dest: /home/ubuntu/.aws/config
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Set AWS credentials
+      template:
+        src: aws_credentials.j2
+        dest: /home/ubuntu/.aws/credentials
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+    
+    - name: Clean up installation files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/awscliv2.zip"
+        - "/tmp/aws"

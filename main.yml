@@ -1,0 +1,112 @@
+---
+- name: Creating an AWS EC2 instance with Ansible CLI
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    region: us-east-1
+    instance_type: t2.micro
+    ami: ami-04a81a99f5ec58529
+    ssh_key_name: ansible_aws
+    vpc_name: ansible-vpc-test
+    cidr_block: "10.0.0.0/16"
+    cidr: "10.0.0.0/24"
+    # aws_access_key: {{aws_access_key}}
+    # aws_access_key_secret: {{ aws_secret_key }}
+  
+  tasks:
+    - name: Provisioning an EC2 instance
+      block:
+      - name: Creating a VPC
+        amazon.aws.ec2_vpc_net:
+          name: "ansible-aws-vpc"
+          cidr_block: "{{ cidr_block }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          region: "{{ region }}"
+        register: vpc
+      
+      - name: Creating and Attaching Internet Gateway to VPC
+        amazon.aws.ec2_vpc_igw:
+          vpc_id: "{{ vpc.vpc.id }}"
+          state: present
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          region: "{{ region }}"
+        register: igw
+
+      - name: Creating a subnet
+        amazon.aws.ec2_vpc_subnet:
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          cidr: "{{ cidr }}"
+          region: "{{ region }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          map_public: yes
+        register: subnet
+
+      - name: Create a route table
+        amazon.aws.ec2_vpc_route_table:
+          vpc_id: "{{ vpc.vpc.id }}"
+          region: "{{ region }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          tags:
+            Name: Public
+          subnets:
+            - "{{ subnet.subnet.id }}"
+          routes:
+            - dest: 0.0.0.0/0
+              gateway_id: "{{ igw.gateway_id }}"
+        register: public_route_table
+
+      - name: Creating a security group
+        amazon.aws.ec2_security_group:
+          name: "ansible-aws-security-group"
+          description: "AWS Security Group for Ansible Automation"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          region: "{{ region }}"
+          rules:
+            - proto: tcp
+              ports: 
+              - 22
+              cidr_ip: 0.0.0.0/0
+              rule_desc: "allow all on ssh port 22"
+            - proto: tcp
+              ports: 
+              - 3306
+              cidr_ip: 0.0.0.0/0
+              rule_desc: "allow MySQL/MariaDB"
+        register: security_group
+      
+      - name: Creating a key pair for ssh
+        amazon.aws.ec2_key:
+          name: "{{ ssh_key_name }}"
+          region: "{{ region }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          key_material: "{{ item }}"
+        with_file: ~/keys/ansible_aws.pub
+
+      - name: Launching an EC2 instance with public ip address
+        amazon.aws.ec2_instance:
+          name: "ansible_instance"
+          key_name: "{{ ssh_key_name }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_subnet_id: "{{ subnet.subnet.id }}"
+          instance_type: "{{ instance_type }}"
+          security_group: "{{ security_group.group_id }}"
+          count: 1
+          wait: yes
+          aws_region: "{{ region }}"
+          network:
+            assign_public_ip: true
+          image_id: "{{ ami }}"
+          tags:
+            Environment: Testing
+      tags: ["never", "create_ec2"]
+
+    # The commented out 'Facts' block remains unchanged
