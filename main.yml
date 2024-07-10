@@ -8,7 +8,7 @@
     instance_type: t2.micro
     ami: ami-04a81a99f5ec58529
     ssh_key_name: ansible_aws
-    vpc_name: ansible-vpc-test
+    vpc_name: ansible-vpc
     cidr_block: "10.0.0.0/16"
     cidr: "10.0.0.0/24"
     # aws_access_key: {{aws_access_key}}
@@ -109,4 +109,3 @@
             Environment: Testing
       tags: ["never", "create_ec2"]
 
-    # The commented out 'Facts' block remains unchanged

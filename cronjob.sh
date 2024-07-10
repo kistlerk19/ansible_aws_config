@@ -4,7 +4,7 @@ set -e  # Exit immediately if a command exits with a non-zero status
 # MySQL credentials
 DB_USER="root"
 DB_PASSWORD="Amalitech123"
-DB_NAME="test"
+DB_NAME="world"
 
 # Backup directory
 BACKUP_DIR="/home/ubuntu/backup"

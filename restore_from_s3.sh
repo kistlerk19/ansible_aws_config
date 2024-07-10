@@ -4,23 +4,25 @@ set -e  # Exit immediately if a command exits with a non-zero status
 # MySQL credentials
 DB_USER="root"
 DB_PASSWORD="Amalitech123"
-DB_NAME="test"
+DB_NAME="restoredb"
 
 # S3 bucket details
 S3_BUCKET="mysql-buck-42"
 
 # Use a wildcard to match your backup files
-S3_FILE_PATTERN="test_backup_*.sql.gpg"
+# S3_FILE_PATTERN="world_backup_*.sql.gpg"
 
 # Get the latest file matching the pattern
-LATEST_FILE=$(aws s3 ls "s3://${S3_BUCKET}/" | grep "${S3_FILE_PATTERN}" | sort | tail -n 1 | awk '{print $4}')
+# LATEST_FILE=$(aws s3 ls "s3://${S3_BUCKET}/" | grep "${S3_FILE_PATTERN}" | sort | tail -n 1 | awk '{print $4}')
 
-if [ -z "${LATEST_FILE}" ]; then
-    echo "No backup file found matching the pattern ${S3_FILE_PATTERN}"
-    exit 1
-fi
+# if [ -z "${LATEST_FILE}" ]; then
+#     echo "No backup file found matching the pattern ${S3_FILE_PATTERN}"
+#     exit 1
+# fi
 
-echo "Latest backup file: ${LATEST_FILE}"
+# echo "Latest backup file: ${LATEST_FILE}"
+
+LATEST_FILE="world_backup_20240708_155701.gpg.sql"
 
 # Use LATEST_FILE instead of S3_FILE in the rest of your script
 ENCRYPTED_FILE="${LOCAL_DIR}/${LATEST_FILE}"
