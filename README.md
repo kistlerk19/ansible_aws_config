@@ -1,4 +1,3 @@
-Certainly! Here's a README that describes the process of launching an EC2 instance, installing and securing MySQL, and setting up a backup script with a cron job, all using Ansible:
 
 ```markdown
 # AWS EC2 MySQL Setup and Backup with Ansible
